@@ -1,7 +1,7 @@
-Project Overview
+#Project Overview
 TetrisGame is a React-based implementation of the classic Tetris game built with modern web technologies. It features an interactive game board, score tracking, and game controls.
 
-Key Features
+#Key Features
 React 19 - Latest React framework with hooks for state management
 Vite - Fast build tool for development and production
 Game Logic - Custom useGameLogic hook handling game mechanics

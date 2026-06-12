@@ -1,10 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createBoard, ROWS, COLS } from "../utils/board";
-import {
-  collision,
-  randomPiece,
-  rotateMatrix,
-} from "../utils/helpers";
+import { collision, randomPiece, rotateMatrix } from "../utils/helpers";
 
 const useGameLogic = () => {
   const [board, setBoard] = useState(createBoard());
@@ -13,79 +9,26 @@ const useGameLogic = () => {
   const [gameOver, setGameOver] = useState(false);
 
   const gameLoop = useRef();
+  const boardRef = useRef(board);
+  const pieceRef = useRef(piece);
+  const gameOverRef = useRef(gameOver);
 
-  useEffect(() => {
-    gameLoop.current = setInterval(() => {
-      moveDown();
-    }, 500);
+  useEffect(() => { boardRef.current = board; });
+  useEffect(() => { pieceRef.current = piece; });
+  useEffect(() => { gameOverRef.current = gameOver; });
 
-    return () => clearInterval(gameLoop.current);
-  });
-
-  useEffect(() => {
-    const handleKeyPress = (e) => {
-      if (gameOver) return;
-
-       switch (e.key) {
-        case "ArrowLeft":
-          moveHorizontal(-1);
-          break;
-        case "ArrowRight":
-          moveHorizontal(1);
-          break;
-        case "ArrowDown":
-          moveDown();
-          break;
-        case "ArrowUp":
-          rotatePiece();
-          break;
-        default:
-          break;
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyPress);
-    
-    return () => {
-      window.removeEventListener("keydown", handleKeyPress);
-    };
-  }, [piece, board, gameOver]);
-
-  const mergePiece = () => {
-    const newBoard = board.map((row) => [...row]);
-
-    piece.shape.forEach((row, r) => {
-      row.forEach((cell, c) => {
-        if (cell) {
-          newBoard[piece.row + r][piece.col + c] = piece.color;
-        }
-      });
-    });
-
-    clearRows(newBoard);
-
-    const nextPiece = randomPiece();
-
-    if (
-      collision(
-        newBoard,
-        nextPiece,
-        nextPiece.row,
-        nextPiece.col,
-        nextPiece.shape
-      )
-    ) {
-      setGameOver(true);
-      clearInterval(gameLoop.current);
-    }
-
+  const restartGame = useCallback(() => {
+    clearInterval(gameLoop.current);
+    const newBoard = createBoard();
+    const newPiece = randomPiece();
     setBoard(newBoard);
-    setPiece(nextPiece);
-  };
+    setPiece(newPiece);
+    setScore(0);
+    setGameOver(false);
+  }, []);
 
-  const clearRows = (newBoard) => {
+  const clearRows = useCallback((newBoard) => {
     let cleared = 0;
-
     for (let r = ROWS - 1; r >= 0; r--) {
       if (newBoard[r].every((cell) => cell !== null)) {
         newBoard.splice(r, 1);
@@ -94,41 +37,94 @@ const useGameLogic = () => {
         r++;
       }
     }
-
     if (cleared > 0) {
       setScore((prev) => prev + cleared * 100);
     }
-  };
+  }, []);
 
-  const moveDown = () => {
-    if (
-      !collision(board, piece, piece.row + 1, piece.col, piece.shape)
-    ) {
-      setPiece({ ...piece, row: piece.row + 1 });
+  const mergePiece = useCallback(() => {
+    const currentBoard = boardRef.current;
+    const currentPiece = pieceRef.current;
+    const newBoard = currentBoard.map((row) => [...row]);
+
+    currentPiece.shape.forEach((row, r) => {
+      row.forEach((cell, c) => {
+        if (cell) {
+          newBoard[currentPiece.row + r][currentPiece.col + c] = currentPiece.color;
+        }
+      });
+    });
+
+    clearRows(newBoard);
+
+    const nextPiece = randomPiece();
+
+    if (collision(newBoard, nextPiece, nextPiece.row, nextPiece.col, nextPiece.shape)) {
+      setGameOver(true);
+      clearInterval(gameLoop.current);
+    }
+
+    setBoard(newBoard);
+    setPiece(nextPiece);
+  }, [clearRows]);
+
+  const moveDown = useCallback(() => {
+    if (gameOverRef.current) return;
+    const currentPiece = pieceRef.current;
+    const currentBoard = boardRef.current;
+    if (!collision(currentBoard, currentPiece, currentPiece.row + 1, currentPiece.col, currentPiece.shape)) {
+      setPiece((p) => ({ ...p, row: p.row + 1 }));
     } else {
       mergePiece();
     }
-  };
+  }, [mergePiece]);
 
-  const moveHorizontal = (dir) => {
-    if (
-      !collision(board, piece, piece.row, piece.col + dir, piece.shape)
-    ) {
-      setPiece({ ...piece, col: piece.col + dir });
-    }
-  };
+  useEffect(() => {
+    if (gameOver) return;
+    gameLoop.current = setInterval(() => {
+      moveDown();
+    }, 500);
+    return () => clearInterval(gameLoop.current);
+  }, [gameOver, moveDown]);
 
-  const rotatePiece = () => {
-    const rotated = rotateMatrix(piece.shape);
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (gameOverRef.current) return;
+      const currentPiece = pieceRef.current;
+      const currentBoard = boardRef.current;
 
-    if (!collision(board, piece, piece.row, piece.col, rotated)) {
-      setPiece({ ...piece, shape: rotated });
-    }
-  };
+      switch (e.key) {
+        case "ArrowLeft":
+          if (!collision(currentBoard, currentPiece, currentPiece.row, currentPiece.col - 1, currentPiece.shape)) {
+            setPiece((p) => ({ ...p, col: p.col - 1 }));
+          }
+          break;
+        case "ArrowRight":
+          if (!collision(currentBoard, currentPiece, currentPiece.row, currentPiece.col + 1, currentPiece.shape)) {
+            setPiece((p) => ({ ...p, col: p.col + 1 }));
+          }
+          break;
+        case "ArrowDown":
+          moveDown();
+          break;
+        case "ArrowUp": {
+          const rotated = rotateMatrix(currentPiece.shape);
+          if (!collision(currentBoard, currentPiece, currentPiece.row, currentPiece.col, rotated)) {
+            setPiece((p) => ({ ...p, shape: rotated }));
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [moveDown]);
 
   const drawBoard = () => {
     const display = board.map((row) => [...row]);
-
     piece.shape.forEach((row, r) => {
       row.forEach((cell, c) => {
         if (cell) {
@@ -136,7 +132,6 @@ const useGameLogic = () => {
         }
       });
     });
-
     return display;
   };
 
@@ -144,6 +139,7 @@ const useGameLogic = () => {
     board: drawBoard(),
     score,
     gameOver,
+    restartGame,
   };
 };
 

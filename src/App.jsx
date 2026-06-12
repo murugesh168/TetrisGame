@@ -1,24 +1,26 @@
-import React from "react";
 import Board from "./components/Board";
 import ScoreBoard from "./components/ScoreBoard";
 import Controls from "./components/Controls";
 import useGameLogic from "./hooks/useGameLogic";
-import "./styles/game.css";
+
 
 function App() {
-  const { board, score, gameOver } = useGameLogic();
+  const { board, score, gameOver, restartGame } = useGameLogic();
 
   return (
-    <div className="container">
-      <h1>Tetris Game</h1>
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center font-mono">
+      {/* Title */}
+      <h1 className="text-4xl font-extrabold tracking-[0.3em] uppercase mb-6
+          text-transparent bg-clip-text bg-gradient-to-r
+          from-cyan-400 to-purple-400 drop-shadow-lg">
+        Tetris
+      </h1>
 
       <ScoreBoard score={score} gameOver={gameOver} />
-
       <Board board={board} />
-
-      <Controls />
+      <Controls onRestart={restartGame} />
     </div>
-  )
+  );
 }
 
 export default App

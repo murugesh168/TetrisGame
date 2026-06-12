@@ -1,11 +1,9 @@
-import React from "react";
-
 function Cell({ color }) {
   return (
     <div
-      className="cell"
-      style={{ backgroundColor: color || "#111" }}
-    ></div>
+      className="w-[30px] h-[30px] border border-slate-700 box-border"
+      style={{ backgroundColor: color || "#0f172a" }}
+    />
   );
 }
 

@@ -23,7 +23,7 @@ TetrisGame is a React-based implementation of the classic Tetris game built with
 ## Live Demo
 Play the game live: [tetrisgamer.netlify.app](https://tetrisgamer.netlify.app)
 
-Project Structure
+## Project Structure
 Code
 ├── src/
 │   ├── App.jsx           # Main game component

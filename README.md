@@ -20,13 +20,11 @@ TetrisGame is a React-based implementation of the classic Tetris game built with
 - **Development:** ESLint for code linting
 - **Type Support:** TypeScript types included
 
-## Live Demo
-Play the game live: [tetrisgamer.netlify.app](https://tetrisgamer.netlify.app)
 
 ## 📁 Project Structure
 
 ```
-Code
+React-TetrisGame/
 ├── src/
 │   ├── App.jsx           # Main game component
 │   ├── main.jsx          # React entry point
@@ -38,5 +36,6 @@ Code
 └── vite.config.js        # Vite configuration
 
 ```
-Features in Development
-The game includes real-time board updates, score tracking, and game-over detection via the useGameLogic hook that manages the core Tetris mechanics.
+
+## Live Demo
+Play the game live: [tetrisgamer.netlify.app](https://tetrisgamer.netlify.app)
